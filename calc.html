@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Miniräknare</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Nunito:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #d6e4f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .calc {
+      background: #1a1a2e;
+      border-radius: 18px;
+      padding: 18px 18px 22px;
+      width: 280px;
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+
+    /* ── Brand strip ── */
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .brand-name {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #4fc3f7;
+    }
+    .solar-strip {
+      display: flex;
+      gap: 3px;
+    }
+    .solar-cell {
+      width: 18px;
+      height: 8px;
+      background: linear-gradient(135deg, #5a8a3a 0%, #8bc34a 50%, #5a8a3a 100%);
+      border-radius: 2px;
+      border: 1px solid #3a6a1a;
+    }
+
+    /* ── Display ── */
+    .display {
+      background: #b8d4a0;
+      border-radius: 10px;
+      padding: 10px 14px 8px;
+      margin-bottom: 14px;
+      border: 2px solid #7aab50;
+      box-shadow: inset 0 3px 8px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.15);
+      position: relative;
+    }
+    .display::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.03) 3px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+    }
+
+    .row-input {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 18px;
+      color: #1a3a0a;
+      min-height: 24px;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: 0.85;
+      letter-spacing: 1px;
+    }
+
+    .row-divider {
+      border: none;
+      border-top: 1px solid rgba(0,0,0,0.18);
+      margin: 6px 0;
+    }
+
+    .row-result {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 36px;
+      color: #0d2a00;
+      min-height: 44px;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: 1px;
+      transition: opacity 0.15s;
+    }
+    .row-result.flash {
+      opacity: 0.3;
+    }
+
+    /* ── Button grid ── */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      height: 52px;
+      transition: transform 0.07s, filter 0.07s;
+      position: relative;
+      letter-spacing: 0.5px;
+    }
+    button:active {
+      transform: scale(0.92);
+      filter: brightness(0.85);
+    }
+
+    /* Number buttons */
+    .btn-num {
+      background: #2d2d4e;
+      color: #e0e0f0;
+      box-shadow: 0 4px 0 #12122a, 0 1px 0 rgba(255,255,255,0.08) inset;
+    }
+    .btn-num:hover { background: #3a3a62; }
+
+    /* Operator buttons */
+    .btn-op {
+      background: #1565c0;
+      color: #bbdefb;
+      box-shadow: 0 4px 0 #0a3a7a, 0 1px 0 rgba(255,255,255,0.12) inset;
+    }
+    .btn-op:hover { background: #1976d2; }
+
+    /* Equals */
+    .btn-eq {
+      background: #e65100;
+      color: #fff3e0;
+      box-shadow: 0 4px 0 #7c2900, 0 1px 0 rgba(255,255,255,0.12) inset;
+      font-size: 20px;
+    }
+    .btn-eq:hover { background: #f4511e; }
+
+    /* Clear */
+    .btn-clear {
+      background: #b71c1c;
+      color: #ffcdd2;
+      box-shadow: 0 4px 0 #5c0000, 0 1px 0 rgba(255,255,255,0.1) inset;
+      font-size: 13px;
+    }
+    .btn-clear:hover { background: #c62828; }
+
+    /* Backspace */
+    .btn-back {
+      background: #4a2060;
+      color: #e1bee7;
+      box-shadow: 0 4px 0 #1a0030, 0 1px 0 rgba(255,255,255,0.1) inset;
+      font-size: 18px;
+    }
+    .btn-back:hover { background: #6a3080; }
+
+    /* Square root */
+    .btn-sqrt {
+      background: #004d40;
+      color: #b2dfdb;
+      box-shadow: 0 4px 0 #001a14, 0 1px 0 rgba(255,255,255,0.1) inset;
+      font-size: 16px;
+    }
+    .btn-sqrt:hover { background: #00695c; }
+
+    /* Zero – spans 2 cols */
+    .btn-zero {
+      grid-column: span 2;
+    }
+
+    /* Error state */
+    .row-result.error { color: #c0392b; font-size: 20px; }
+  </style>
+</head>
+<body>
+<div class="calc">
+
+  <div class="brand">
+    <span class="brand-name">AD CALC</span>
+    <div class="solar-strip">
+      <div class="solar-cell"></div>
+      <div class="solar-cell"></div>
+      <div class="solar-cell"></div>
+    </div>
+  </div>
+
+  <div class="display">
+    <div class="row-input"  id="row-input">0</div>
+    <hr class="row-divider" />
+    <div class="row-result" id="row-result"></div>
+  </div>
+
+  <div class="buttons">
+    <!-- Row 1 -->
+    <button class="btn-clear"           onclick="clearAll()">AC</button>
+    <button class="btn-back"            onclick="backspace()">⌫</button>
+    <button class="btn-sqrt"            onclick="sqrt()">√</button>
+    <button class="btn-op"              onclick="appendOp('÷')">÷</button>
+
+    <!-- Row 2 -->
+    <button class="btn-num"             onclick="appendDigit('7')">7</button>
+    <button class="btn-num"             onclick="appendDigit('8')">8</button>
+    <button class="btn-num"             onclick="appendDigit('9')">9</button>
+    <button class="btn-op"              onclick="appendOp('×')">×</button>
+
+    <!-- Row 3 -->
+    <button class="btn-num"             onclick="appendDigit('4')">4</button>
+    <button class="btn-num"             onclick="appendDigit('5')">5</button>
+    <button class="btn-num"             onclick="appendDigit('6')">6</button>
+    <button class="btn-op"              onclick="appendOp('−')">−</button>
+
+    <!-- Row 4 -->
+    <button class="btn-num"             onclick="appendDigit('1')">1</button>
+    <button class="btn-num"             onclick="appendDigit('2')">2</button>
+    <button class="btn-num"             onclick="appendDigit('3')">3</button>
+    <button class="btn-op"              onclick="appendOp('+')">+</button>
+
+    <!-- Row 5 -->
+    <button class="btn-num btn-zero"    onclick="appendDigit('0')">0</button>
+    <button class="btn-num"             onclick="appendDecimal()">,</button>
+    <button class="btn-eq"              onclick="calculate()">=</button>
+  </div>
+
+</div>
+
+<script>
+  const inputEl  = document.getElementById('row-input');
+  const resultEl = document.getElementById('row-result');
+
+  let expr        = '';   // raw expression string shown in row 1
+  let lastResult  = null; // numeric result after pressing =
+  let justEvaled  = false;// did we just press = ?
+  const MAX       = 30;
+
+  function render() {
+    inputEl.textContent = expr || '0';
+  }
+
+  function appendDigit(d) {
+    if (justEvaled) {
+      // Start a brand-new expression, discard old one
+      expr = '';
+      lastResult = null;
+      justEvaled = false;
+    }
+    if (expr.length >= MAX) return;
+    if (expr === '0') expr = d;
+    else expr += d;
+    render();
+  }
+
+  function appendDecimal() {
+    if (justEvaled) {
+      expr = '0';
+      lastResult = null;
+      justEvaled = false;
+    }
+    const parts = expr.split(/[+−×÷]/);
+    const last = parts[parts.length - 1];
+    if (last.includes(',')) return;
+    if (last === '') expr += '0';
+    expr += ',';
+    render();
+  }
+
+  function appendOp(op) {
+    if (justEvaled) {
+      // Continue from result: seed row 1 with the result value
+      expr = formatNum(lastResult);
+      justEvaled = false;
+    }
+    if (expr === '') expr = '0';
+    const ops = ['+', '−', '×', '÷'];
+    if (ops.includes(expr.slice(-1))) expr = expr.slice(0, -1);
+    expr += op;
+    render();
+  }
+
+  function backspace() {
+    if (justEvaled) { clearAll(); return; }
+    expr = expr.slice(0, -1);
+    render();
+  }
+
+  function clearAll() {
+    expr = '';
+    lastResult = null;
+    justEvaled = false;
+    resultEl.textContent = '';
+    resultEl.className = 'row-result';
+    render();
+  }
+
+  function sqrt() {
+    const val = parseExpr(expr || '0');
+    if (val === null || isNaN(val) || val < 0) { showError('Fel tal'); return; }
+    const res = Math.sqrt(val);
+    const str = formatNum(res);
+    lastResult = res;
+    // Show √(...) in row 1 to keep it informative
+    expr = '√(' + (expr || '0') + ')';
+    justEvaled = true;
+    render();
+    flashResult(str);
+  }
+
+  function calculate() {
+    if (!expr) return;
+    const result = parseExpr(expr);
+    if (result === null) return;
+    const str = formatNum(result);
+    lastResult = result;
+    justEvaled = true;
+    // Row 1 stays unchanged – expression remains visible
+    render();
+    flashResult(str);
+  }
+
+  /* ── Left-to-right arithmetic parser ── */
+  function parseExpr(raw) {
+    // Convert display commas to dots for JS parseFloat
+    const normalized = raw.replace(/,/g, '.');
+    // Unwrap √(...) notation if present
+    const unwrapped = normalized.replace(/^√\((.+)\)$/, '$1');
+    const tokens = unwrapped.split(/([+−×÷])/).filter(t => t !== '');
+    if (tokens.length === 0) return null;
+
+    let acc = parseFloat(tokens[0]);
+    if (isNaN(acc)) return null;
+
+    for (let i = 1; i < tokens.length - 1; i += 2) {
+      const op  = tokens[i];
+      const num = parseFloat(tokens[i + 1]);
+      if (isNaN(num)) return null;
+      if (op === '+') acc += num;
+      if (op === '−') acc -= num;
+      if (op === '×') acc *= num;
+      if (op === '÷') {
+        if (num === 0) { showError('Kan ej dela med 0'); return null; }
+        acc /= num;
+      }
+    }
+    return acc;
+  }
+
+  function formatNum(n) {
+    if (n === null || !isFinite(n)) return 'Fel';
+    // Format with comma as decimal separator
+    return parseFloat(n.toPrecision(10)).toString().replace('.', ',');
+  }
+
+  function flashResult(str) {
+    resultEl.className = 'row-result flash';
+    setTimeout(() => {
+      resultEl.textContent = str;
+      resultEl.className = 'row-result';
+    }, 80);
+  }
+
+  function showError(msg) {
+    resultEl.textContent = msg;
+    resultEl.className = 'row-result error';
+    expr = '';
+    lastResult = null;
+    justEvaled = true;
+    render();
+  }
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') appendDigit(e.key);
+    else if (e.key === '.' || e.key === ',') appendDecimal();
+    else if (e.key === '+')          appendOp('+');
+    else if (e.key === '-')          appendOp('−');
+    else if (e.key === '*')          appendOp('×');
+    else if (e.key === '/')          { e.preventDefault(); appendOp('÷'); }
+    else if (e.key === 'Enter' || e.key === '=') calculate();
+    else if (e.key === 'Backspace')  backspace();
+    else if (e.key === 'Escape')     clearAll();
+  });
+</script>
+</body>
+</html>
